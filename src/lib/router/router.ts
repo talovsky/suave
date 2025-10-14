@@ -1,5 +1,5 @@
 /**
- * wouter-svelte - Standalone Single File Version
+ * svouter - Standalone Single File Version
  *
  * The dumbest router for Svelte 5 - everything in one file!
  * Just copy this file to your project and you're good to go.
@@ -7,17 +7,10 @@
  * Dependencies:
  * - svelte (peer dependency)
  * - regexparam (for route matching)
- *
- * @version 2.0.0
- * @license MIT
  */
 
 import { parse as parsePattern } from 'regexparam';
 import { writable, derived, readable, get, type Readable } from 'svelte/store';
-
-// ============================================================================
-// Types
-// ============================================================================
 
 export interface RouterPage<Routes extends Record<string, string>> {
 	route: keyof Routes;
@@ -80,23 +73,20 @@ const subscribeToLocationUpdates = (callback: () => void): (() => void) => {
 	};
 };
 
-const createLocationStore = <T>(fn: () => T, ssrFn?: () => T): Readable<T> =>
-	readable(typeof window !== 'undefined' ? fn() : (ssrFn?.() ?? fn()), (set) => {
-		if (typeof window === 'undefined') return;
-		return subscribeToLocationUpdates(() => set(fn()));
-	});
+const createLocationStore = <T>(fn: () => T): Readable<T> =>
+	readable(fn(), (set) => subscribeToLocationUpdates(() => set(fn())));
 
 const currentPathname = (): string => location.pathname;
 
-export const browserLocation = ({ ssrPath }: { ssrPath?: string } = {}): [Readable<string>, NavigateFunction] => {
+export const browserLocation = (): [Readable<string>, NavigateFunction] => {
 	const navigate: NavigateFunction = (to, { replace = false, state = null } = {}) =>
 		history[replace ? eventReplaceState : eventPushState](state, '', to);
 
-	return [createLocationStore(currentPathname, ssrPath ? () => ssrPath : currentPathname), navigate];
+	return [createLocationStore(currentPathname), navigate];
 };
 
 // Monkey-patch history API (once)
-const patchKey = Symbol.for('wouter_v3');
+const patchKey = Symbol.for('svelte-navigator');
 if (typeof history !== 'undefined' && typeof (window as unknown as Record<symbol, unknown>)[patchKey] === 'undefined') {
 	for (const type of [eventPushState, eventReplaceState] as const) {
 		const original = history[type].bind(history);
@@ -131,7 +121,7 @@ const subscribeToHashUpdates = (callback: () => void): (() => void) => {
 
 const currentHashLocation = (): string => '/' + location.hash.replace(/^#?\/?/, '');
 
-export const hashLocation = ({ ssrPath = '/' }: { ssrPath?: string } = {}): [Readable<string>, NavigateFunction] => {
+export const hashLocation = (): [Readable<string>, NavigateFunction] => {
 	const navigate: NavigateFunction = (to, { state = null, replace = false } = {}) => {
 		const [hash, search] = to.replace(/^#?\/?/, '').split('?');
 		const newRelativePath = location.pathname + (search ? `?${search}` : location.search) + `#/${hash}`;
@@ -152,13 +142,7 @@ export const hashLocation = ({ ssrPath = '/' }: { ssrPath?: string } = {}): [Rea
 		dispatchEvent(event);
 	};
 
-	return [
-		readable(typeof window !== 'undefined' ? currentHashLocation() : ssrPath, (set) => {
-			if (typeof window === 'undefined') return;
-			return subscribeToHashUpdates(() => set(currentHashLocation()));
-		}),
-		navigate
-	];
+	return [readable(currentHashLocation(), (set) => subscribeToHashUpdates(() => set(currentHashLocation()))), navigate];
 };
 
 // ============================================================================
@@ -379,14 +363,11 @@ export function createRouter<Routes extends Record<string, string>>(
 		const match = matchRoutes(routes, path);
 
 		if (match) {
-			const searchStr = typeof window !== 'undefined' ? window.location.search : '';
-			const hashStr = typeof window !== 'undefined' ? window.location.hash : '';
-
 			routerStore.set({
 				route: match.route,
 				params: match.params,
-				search: parseSearch(searchStr),
-				hash: hashStr,
+				search: parseSearch(window.location.search),
+				hash: window.location.hash,
 				path
 			});
 		} else {
@@ -394,7 +375,7 @@ export function createRouter<Routes extends Record<string, string>>(
 		}
 	});
 
-	if (typeof window !== 'undefined' && autoLinks) {
+	if (autoLinks) {
 		linkInterceptor(navigate, base);
 	}
 
@@ -441,16 +422,9 @@ export function createRouter<Routes extends Record<string, string>>(
 // ============================================================================
 
 export function createSearchParams(): [Readable<URLSearchParams>, SetSearchParamsFunction] {
-	const getSearch = () => {
-		if (typeof window === 'undefined') return '';
-		return window.location.search;
-	};
+	const getSearch = () => window.location.search;
 
-	const searchStringStore: Readable<string> = readable('', (set) => {
-		if (typeof window === 'undefined') return;
-
-		set(getSearch());
-
+	const searchStringStore: Readable<string> = readable(getSearch(), (set) => {
 		const onPopState = () => set(getSearch());
 		window.addEventListener('popstate', onPopState);
 
@@ -470,8 +444,6 @@ export function createSearchParams(): [Readable<URLSearchParams>, SetSearchParam
 	let tempSearchParams: URLSearchParams | undefined;
 
 	const setSearchParams: SetSearchParamsFunction = (nextInit, options) => {
-		if (typeof window === 'undefined') return;
-
 		const currentParams = tempSearchParams || get(searchStore);
 		tempSearchParams = new URLSearchParams(typeof nextInit === 'function' ? nextInit(currentParams) : nextInit);
 
