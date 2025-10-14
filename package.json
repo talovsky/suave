@@ -12,6 +12,9 @@
 		"lint": "prettier --check . && eslint ."
 	},
 	"dependencies": {
+		"@fontsource-variable/crimson-pro": "^5.2.8",
+		"@fontsource-variable/karla": "^5.2.8",
+		"marked": "^16.4.0",
 		"mitt": "^3.0.1",
 		"regexparam": "^3.0.0"
 	},

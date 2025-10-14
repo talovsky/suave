@@ -1,4 +1,4 @@
-import type { AbilityScore } from './types/Character';
+import type { AbilityScore } from '../types/Character';
 
 export const BASE_URL = 'https://api.open5e.com/';
 

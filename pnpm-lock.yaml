@@ -11,6 +11,15 @@ importers:
 
   .:
     dependencies:
+      '@fontsource-variable/crimson-pro':
+        specifier: ^5.2.8
+        version: 5.2.8
+      '@fontsource-variable/karla':
+        specifier: ^5.2.8
+        version: 5.2.8
+      marked:
+        specifier: ^16.4.0
+        version: 16.4.0
       mitt:
         specifier: ^3.0.1
         version: 3.0.1
@@ -115,6 +124,12 @@ packages:
   '@eslint/plugin-kit@0.4.0':
     resolution: {integrity: sha512-sB5uyeq+dwCWyPi31B2gQlVlo+j5brPlWx4yZBrEaRo/nhdDE8Xke1gsGgtiBdaBTxuTkceLVuVt/pclrasb0A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@fontsource-variable/crimson-pro@5.2.8':
+    resolution: {integrity: sha512-En4uvz5Wb9gZFi/EVPA9jfC7Bh5NLYwOGc2KhUIT5mPSKrOSCaI1IyvQ3SbUXeHJ04MhWJiRLJSuU9CmyDcOIA==}
+
+  '@fontsource-variable/karla@5.2.8':
+    resolution: {integrity: sha512-JuJZVY/r5InCfkKb3jp5XCwuypIvc62barKaxzSAYnxzHo9YnCfZDWDjL+gbSYrUI+lVxhEyS+7QkOuVBvWcOA==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -1042,6 +1057,11 @@ packages:
   magic-string@0.30.19:
     resolution: {integrity: sha512-2N21sPY9Ws53PZvsEpVtNuSW+ScYbQdp4b9qUaL+9QkHUrGFKo56Lg9Emg5s9V/qrtNBmiR01sYhUOwu3H+VOw==}
 
+  marked@16.4.0:
+    resolution: {integrity: sha512-CTPAcRBq57cn3R8n3hwc2REddc28hjR7RzDXQ+lXLmMJYqn20BaI2cGw6QjgZGIgVfp2Wdfw4aMzgNteQ6qJgQ==}
+    engines: {node: '>= 20'}
+    hasBin: true
+
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
@@ -1573,6 +1593,10 @@ snapshots:
     dependencies:
       '@eslint/core': 0.16.0
       levn: 0.4.1
+
+  '@fontsource-variable/crimson-pro@5.2.8': {}
+
+  '@fontsource-variable/karla@5.2.8': {}
 
   '@humanfs/core@0.19.1': {}
 
@@ -2583,6 +2607,8 @@ snapshots:
   magic-string@0.30.19:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  marked@16.4.0: {}
 
   math-intrinsics@1.1.0: {}
 

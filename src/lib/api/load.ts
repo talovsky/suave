@@ -71,9 +71,12 @@ export function load<T>(fetcher: (signal: AbortSignal) => Promise<T | Response>)
 		controller = new AbortController();
 		const currentController = controller;
 
-		// Update to loading (clear error from previous attempt)
-		currentState = { ...currentState, error: undefined, loading: true };
-		setValue?.(currentState);
+		// Only update to loading if we're not already loading
+		// This prevents redundant updates on initial mount
+		if (!currentState.loading || currentState.error) {
+			currentState = { ...currentState, error: undefined, loading: true };
+			setValue?.(currentState);
+		}
 
 		try {
 			let data = await fetcher(currentController.signal);
