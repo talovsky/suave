@@ -1,26 +1,52 @@
 {
-	"name": "suave",
-	"private": true,
-	"version": "0.0.0",
+	"name": "suave-router",
+	"version": "0.1.0",
+	"description": "Minimal Svelte 5 router package",
+	"license": "MIT",
 	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/talovsky/suave-router.git"
+	},
+	"bugs": {
+		"url": "https://github.com/talovsky/suave-router/issues"
+	},
+	"homepage": "https://github.com/talovsky/suave-router#readme",
+	"keywords": [
+		"svelte",
+		"router",
+		"routing",
+		"spa"
+	],
+	"sideEffects": false,
+	"files": [
+		"dist"
+	],
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
 	"scripts": {
-		"dev": "vite",
-		"build": "vite build",
-		"preview": "vite preview",
-		"check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
+		"clean": "rm -rf dist",
+		"build": "tsc -p tsconfig.build.json",
+		"check": "tsc --noEmit -p tsconfig.json",
+		"prepack": "pnpm clean && pnpm build",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint ."
 	},
 	"dependencies": {
-		"@fontsource-variable/crimson-pro": "^5.2.8",
-		"@fontsource-variable/karla": "^5.2.8",
-		"marked": "^16.4.0",
-		"mitt": "^3.0.1",
 		"regexparam": "^3.0.0"
+	},
+	"peerDependencies": {
+		"svelte": "^5.0.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.37.0",
-		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@tsconfig/svelte": "^5.0.5",
 		"@types/node": "^24.6.0",
 		"eslint": "^9.37.0",
@@ -30,15 +56,8 @@
 		"globals": "^16.4.0",
 		"prettier": "^3.6.2",
 		"prettier-plugin-svelte": "^3.4.0",
-		"svelte": "^5.39.6",
-		"svelte-check": "^4.3.2",
 		"typescript": "~5.9.3",
 		"typescript-eslint": "^8.46.1",
-		"vite": "npm:rolldown-vite@7.1.14"
-	},
-	"pnpm": {
-		"overrides": {
-			"vite": "npm:rolldown-vite@7.1.14"
-		}
+		"svelte": "^5.39.6"
 	}
 }

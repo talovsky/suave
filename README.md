@@ -1,47 +1,127 @@
-# Svelte + TS + Vite
+# suave
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+A small client-side router for pure Svelte 5 apps.
 
-## Recommended IDE Setup
+## Install
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+```bash
+pnpm add suave
+```
 
-## Need an official Svelte framework?
-
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
-
-## Technical considerations
-
-**Why use this over SvelteKit?**
-
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
-
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
-
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
-
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
+## Quick start
 
 ```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+// src/lib/router.ts
+import { createRouter } from 'suave';
+
+export const router = createRouter({
+	home: '/',
+	about: '/about',
+	user: '/users/:id'
+});
 ```
+
+```svelte
+<script lang="ts">
+	import { router } from '$lib/router';
+
+	const page = $derived($router);
+</script>
+
+<nav>
+	<a href="/">Home</a>
+	<a href="/about">About</a>
+	<a href="/users/42">User 42</a>
+</nav>
+
+{#if page?.route === 'home'}
+	<h1>Home</h1>
+{:else if page?.route === 'about'}
+	<h1>About</h1>
+{:else if page?.route === 'user'}
+	<h1>User {page.params.id}</h1>
+{:else}
+	<h1>Not found</h1>
+{/if}
+```
+
+## `createRouter(routes, config?)`
+
+Creates a single readable store with the current route data.
+
+### Routes
+
+- Static: `'/about'`
+- Param: `'/users/:id'`
+- Optional param: `'/posts/:slug?'`
+
+### Returned store value
+
+`router` resolves to `RouterPage | null`:
+
+- `route`: matched route key
+- `params`: route params object
+- `search`: parsed query params (`string` or `string[]` for repeated keys)
+- `hash`: current `window.location.hash`
+- `path`: current path relative to configured base
+
+When no route matches, the store value is `null`.
+
+### Router config
+
+- `base?: string` - base path prefix for deployment under a subpath
+- `hash?: boolean` - use hash routing (`#/path`) instead of pathname routing
+- `links?: boolean` - enable document-level `<a>` interception (default `true`)
+
+## Navigation API
+
+### `router.open(pathOrRoute, params?, options?)`
+
+- `pathOrRoute`: either a literal path (`'/about'`) or a route key (`'user'`)
+- `params`: used when opening by route key
+- `options.replace`: use `history.replaceState`
+- `options.state`: history state payload
+
+### `router.getPath(route, params?, search?)`
+
+Builds a path string from a route key, route params, and optional search params.
+
+## Search params helper
+
+### `createSearchParams()`
+
+Returns `[searchStore, setSearchParams]`.
+
+- `searchStore`: readable `URLSearchParams`
+- `setSearchParams(next, options?)`: accepts
+  - query string
+  - `URLSearchParams`
+  - object map
+  - updater function `(current) => next`
+
+## Link interception rules
+
+With `links: true`, the router intercepts `<a>` navigation at the document level.
+
+Ignored links:
+
+- links with `target` or `download`
+- links marked `data-native` or `data-external`
+- `mailto:` and `tel:`
+- external URLs (including protocol-relative `//...`)
+- hash-only links (`#section`)
+
+Supported attributes:
+
+- `data-replace` - use replace navigation
+- `data-state='{"from":"menu"}'` - JSON-encoded history state
+- `~` prefix in `href` - absolute app path, ignores `base` stripping logic
+
+## Browser-only usage
+
+This package is for browser environments. Calling router APIs in non-browser contexts throws a clear runtime error.
+
+## Notes
+
+- Route matching uses declaration order; put more specific routes first.
+- This package targets pure Svelte apps. SvelteKit already includes its own router.

@@ -1,14 +1,3 @@
-/**
- * svouter - Standalone Single File Version
- *
- * The dumbest router for Svelte 5 - everything in one file!
- * Just copy this file to your project and you're good to go.
- *
- * Dependencies:
- * - svelte (peer dependency)
- * - regexparam (for route matching)
- */
-
 import { parse as parsePattern } from 'regexparam';
 import { writable, derived, readable, get, type Readable } from 'svelte/store';
 
@@ -62,6 +51,12 @@ const eventReplaceState = 'replaceState';
 const eventHashchange = 'hashchange';
 const events = [eventPopstate, eventPushState, eventReplaceState, eventHashchange] as const;
 
+const assertBrowser = (api: string): void => {
+	if (typeof window === 'undefined' || typeof document === 'undefined') {
+		throw new Error(`${api} can only be used in a browser environment`);
+	}
+};
+
 const subscribeToLocationUpdates = (callback: () => void): (() => void) => {
 	for (const event of events) {
 		addEventListener(event, callback);
@@ -79,6 +74,8 @@ const createLocationStore = <T>(fn: () => T): Readable<T> =>
 const currentPathname = (): string => location.pathname;
 
 export const browserLocation = (): [Readable<string>, NavigateFunction] => {
+	assertBrowser('browserLocation');
+
 	const navigate: NavigateFunction = (to, { replace = false, state = null } = {}) =>
 		history[replace ? eventReplaceState : eventPushState](state, '', to);
 
@@ -122,6 +119,8 @@ const subscribeToHashUpdates = (callback: () => void): (() => void) => {
 const currentHashLocation = (): string => '/' + location.hash.replace(/^#?\/?/, '');
 
 export const hashLocation = (): [Readable<string>, NavigateFunction] => {
+	assertBrowser('hashLocation');
+
 	const navigate: NavigateFunction = (to, { state = null, replace = false } = {}) => {
 		const [hash, search] = to.replace(/^#?\/?/, '').split('?');
 		const newRelativePath = location.pathname + (search ? `?${search}` : location.search) + `#/${hash}`;
@@ -171,6 +170,7 @@ const linkInterceptor = (navigate: NavigateFunction, base: string = ''): (() => 
 
 		const href = anchor.getAttribute('href');
 		if (!href) return;
+		if (href.startsWith('//')) return;
 
 		if (href.startsWith('mailto:') || href.startsWith('tel:') || href.includes('://')) {
 			try {
@@ -350,6 +350,8 @@ export function createRouter<Routes extends Record<string, string>>(
 	routes: Routes,
 	config: RouterConfig = {}
 ): Router<Routes> {
+	assertBrowser('createRouter');
+
 	const base = config.base || '';
 	const useHash = config.hash || false;
 	const autoLinks = config.links !== false;
@@ -422,6 +424,8 @@ export function createRouter<Routes extends Record<string, string>>(
 // ============================================================================
 
 export function createSearchParams(): [Readable<URLSearchParams>, SetSearchParamsFunction] {
+	assertBrowser('createSearchParams');
+
 	const getSearch = () => window.location.search;
 
 	const searchStringStore: Readable<string> = readable(getSearch(), (set) => {
@@ -429,13 +433,13 @@ export function createSearchParams(): [Readable<URLSearchParams>, SetSearchParam
 		window.addEventListener('popstate', onPopState);
 
 		const onLocationChange = () => set(getSearch());
-		window.addEventListener('pushstate', onLocationChange as EventListener);
-		window.addEventListener('replacestate', onLocationChange as EventListener);
+		window.addEventListener(eventPushState, onLocationChange as EventListener);
+		window.addEventListener(eventReplaceState, onLocationChange as EventListener);
 
 		return () => {
 			window.removeEventListener('popstate', onPopState);
-			window.removeEventListener('pushstate', onLocationChange as EventListener);
-			window.removeEventListener('replacestate', onLocationChange as EventListener);
+			window.removeEventListener(eventPushState, onLocationChange as EventListener);
+			window.removeEventListener(eventReplaceState, onLocationChange as EventListener);
 		};
 	});
 
@@ -452,10 +456,10 @@ export function createSearchParams(): [Readable<URLSearchParams>, SetSearchParam
 
 		if (options?.replace) {
 			window.history.replaceState(options.state, '', newUrl);
-			window.dispatchEvent(new Event('replacestate'));
+			window.dispatchEvent(new Event(eventReplaceState));
 		} else {
 			window.history.pushState(options?.state, '', newUrl);
-			window.dispatchEvent(new Event('pushstate'));
+			window.dispatchEvent(new Event(eventPushState));
 		}
 
 		queueMicrotask(() => {
@@ -465,37 +469,3 @@ export function createSearchParams(): [Readable<URLSearchParams>, SetSearchParam
 
 	return [searchStore, setSearchParams];
 }
-
-// ============================================================================
-// Exports Summary
-// ============================================================================
-
-/**
- * Usage:
- *
- * ```ts
- * import { createRouter } from './standalone';
- *
- * export const router = createRouter({
- *   home: '/',
- *   user: '/users/:id',
- *   post: '/posts/:slug',
- * });
- * ```
- *
- * ```svelte
- * <script>
- *   import { router } from './router';
- *   let page = $derived($router);
- * </script>
- *
- * <a href="/">Home</a>
- * <a href="/users/123">User</a>
- *
- * {#if page?.route === 'home'}
- *   <Home />
- * {:else if page?.route === 'user'}
- *   <User id={page.params.id} />
- * {/if}
- * ```
- */
